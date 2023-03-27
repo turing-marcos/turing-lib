@@ -1,0 +1,17 @@
+[package]
+name = "turing-lib"
+version = "1.1.2"
+edition = "2021"
+authors = ["Marcos Gutiérrez Alonso <uo272509@uniovi.es>"]
+repository = "https://github.com/turing-marcos/turing-lib"
+description = "Turing library for Rust"
+license = "GPL-2.0-only"
+exclude = ["**/Examples/"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+pest = "^2.5"
+pest_derive = "^2.5"
+log = "0.4.17"
+env_logger = "0.10.0"
