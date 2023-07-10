@@ -53,6 +53,51 @@ mod tests {
     }
 
     #[test]
+    fn parse_composition_function_name_valid(){
+        let test = "sum";
+
+        parses_to! {
+            parser: TuringParser,
+            input: test,
+            rule: Rule::function_name,
+            tokens: [
+                function_name(0, 3)
+            ]
+        }
+    }
+
+    #[test]
+    fn parse_composition_valid(){
+        let test = "sum()";
+
+        parses_to! {
+            parser: TuringParser,
+            input: test,
+            rule: Rule::composition,
+            tokens: [
+                composition(0, 5, [
+                    function_name(0, 4)
+                ])
+            ]
+        }
+
+        let test = "sum();";
+
+        parses_to! {
+            parser: TuringParser,
+            input: test,
+            rule: Rule::instruction,
+            tokens: [
+                instruction(0, 5, [
+                    composition(0, 4, [
+                        function_name(0, 3)
+                    ])
+                ])
+            ]
+        }
+    }
+
+    #[test]
     // Test that the parser fails when the tape does not contain a 1
     fn parse_tape_zeros() {
         let test = "
