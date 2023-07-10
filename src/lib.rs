@@ -2,12 +2,41 @@ mod instruction;
 mod output;
 mod turing;
 
+use std::borrow::Cow;
+
 pub use instruction::TuringInstruction;
 pub use output::TuringOutput;
+use serde::{Serialize, Deserialize};
 pub use turing::{Rule, TuringMachine, TuringParser};
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Library {
+    pub name: Cow<'static, str>,
+    pub description: Cow<'static, str>,
+    pub initial_state: Cow<'static, str>,
+    pub final_state: Cow<'static, str>,
+    pub code: Cow<'static, str>,
+}
+
+pub const LIBRARIES: [Library; 2] = [
+    Library {
+        name: Cow::Borrowed("sum"),
+        description: Cow::Borrowed("x + y"),
+        initial_state: Cow::Borrowed("p0"),
+        final_state: Cow::Borrowed("p2"),
+        code: Cow::Borrowed(include_str!("./composition/sum.tm"))
+    },
+    Library {
+        name: Cow::Borrowed("duplicate"),
+        description: Cow::Borrowed("2x"),
+        initial_state: Cow::Borrowed("p0"),
+        final_state: Cow::Borrowed("pf"),
+        code: Cow::Borrowed(include_str!("./composition/duplicate.tm"))
+    },
+];
+
 #[cfg(test)]
-mod tests {
+mod test_parsing {
     use std::fs;
 
     use crate::Rule;
