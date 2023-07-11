@@ -2,11 +2,12 @@ mod instruction;
 mod output;
 mod turing;
 
-use std::borrow::Cow;
+use std::{borrow::Cow, collections::HashMap};
 
 pub use instruction::TuringInstruction;
 pub use output::TuringOutput;
-use serde::{Serialize, Deserialize};
+use pest::Parser;
+use serde::{Deserialize, Serialize};
 pub use turing::{Rule, TuringMachine, TuringParser};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,20 +19,41 @@ pub struct Library {
     pub code: Cow<'static, str>,
 }
 
+impl Library {
+    pub fn get_instructions(&self) -> HashMap<(String, bool), TuringInstruction> {
+        let mut instructions: HashMap<(String, bool), TuringInstruction> = HashMap::new();
+
+        let file = match TuringParser::parse(Rule::instructions, self.code.as_ref()) {
+            Ok(mut f) => f.next().unwrap(),
+            Err(e) => panic!("{}", e),
+        };
+
+        for record in file.into_inner() {
+            let tmp = TuringInstruction::from(record.into_inner());
+            instructions.insert(
+                (tmp.from_state.clone(), tmp.from_value.clone()),
+                tmp.clone(),
+            );
+        }
+
+        instructions
+    }
+}
+
 pub const LIBRARIES: [Library; 2] = [
     Library {
         name: Cow::Borrowed("sum"),
         description: Cow::Borrowed("x + y"),
         initial_state: Cow::Borrowed("q0"),
         final_state: Cow::Borrowed("q2"),
-        code: Cow::Borrowed(include_str!("./composition/sum.tm"))
+        code: Cow::Borrowed(include_str!("./composition/sum.tm")),
     },
     Library {
         name: Cow::Borrowed("duplicate"),
         description: Cow::Borrowed("2x"),
         initial_state: Cow::Borrowed("q0"),
         final_state: Cow::Borrowed("qf"),
-        code: Cow::Borrowed(include_str!("./composition/duplicate.tm"))
+        code: Cow::Borrowed(include_str!("./composition/duplicate.tm")),
     },
 ];
 
@@ -186,7 +208,7 @@ mod test_composition {
     use pest::{consumes_to, parses_to};
 
     #[test]
-    fn parse_composition_function_name_valid(){
+    fn parse_composition_function_name_valid() {
         let test = "sum_test";
 
         parses_to! {
@@ -200,7 +222,7 @@ mod test_composition {
     }
 
     #[test]
-    fn parse_composition_valid(){
+    fn parse_composition_valid() {
         let test = "compose = { sum_test };";
 
         parses_to! {

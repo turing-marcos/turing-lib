@@ -3,7 +3,7 @@ use pest::{error::ErrorVariant, Parser, Position};
 use pest_derive::Parser;
 use std::{collections::HashMap, fmt::Write};
 
-use crate::{instruction::Movement, TuringInstruction};
+use crate::{instruction::Movement, Library, TuringInstruction};
 
 use super::TuringOutput;
 
@@ -21,6 +21,7 @@ pub struct TuringMachine {
     pub tape: Vec<bool>,
     pub frequencies: HashMap<String, usize>,
     pub description: Option<String>,
+    pub composed_libs: Vec<Library>,
     pub code: String,
 }
 
@@ -32,6 +33,7 @@ impl TuringMachine {
         let mut current_state: String = String::new();
         let mut tape: Vec<bool> = Vec::new();
         let mut description: Option<String> = None;
+        let mut composed: Vec<Library> = Vec::new();
 
         let file = match TuringParser::parse(Rule::file, code) {
             Ok(mut f) => f.next().unwrap(),
@@ -100,7 +102,35 @@ impl TuringMachine {
                     for r in record.into_inner() {
                         match r.as_rule() {
                             Rule::function_name => {
-                                println!("Found composition function \"{}\"", r.as_str());
+                                debug!("Found composition of: {}", r.as_str());
+
+                                let mut lib: Option<Library> = None;
+
+                                for l in super::LIBRARIES {
+                                    if l.name == r.as_str() {
+                                        lib = Some(l);
+                                        break;
+                                    }
+                                }
+
+                                if let Some(library) = lib {
+                                    debug!("Found the library, composing...");
+
+                                    instructions.extend(library.get_instructions());
+
+                                    composed.push(library.clone());
+                                } else {
+                                    error!("Could not find the library \"{}\"", r.as_str());
+                                    return Err(pest::error::Error::new_from_pos(
+                                        ErrorVariant::CustomError {
+                                            message: format!(
+                                                "Could not find the library \"{}\"",
+                                                r.as_str()
+                                            ),
+                                        },
+                                        Position::from_start(""),
+                                    ));
+                                }
                             }
                             _ => warn!(
                                 "Unhandled: ({:?}, {})",
@@ -144,6 +174,7 @@ impl TuringMachine {
             tape,
             frequencies: HashMap::new(),
             description,
+            composed_libs: composed,
             code: String::from(code),
         })
     }
@@ -175,6 +206,7 @@ impl TuringMachine {
             tape,
             frequencies: HashMap::new(),
             description,
+            composed_libs: Vec::new(),
             code: String::new(),
         }
     }

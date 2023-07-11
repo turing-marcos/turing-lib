@@ -2,8 +2,9 @@ use std::{fmt::Display, str::FromStr};
 
 use crate::turing::Rule;
 use pest::iterators::Pairs;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 /// The possible movements of the tape head
 pub enum Movement {
     RIGHT,
@@ -35,7 +36,7 @@ impl Display for Movement {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 /// A Turing machine instruction
 pub struct TuringInstruction {
     pub from_state: String,

@@ -13,4 +13,6 @@ function_name = @{ ASCII_ALPHA_LOWER ~ (ASCII_ALPHANUMERIC | "_")* }
 composition = { "compose" ~ "=" ~ "{" ~ ((function_name ~ ",")*  ~ function_name) ~ "}" ~ ";"}
 instruction = { "(" ~ state ~ "," ~ value ~ "," ~ value ~ "," ~ movement ~ "," ~ state ~ ")" ~ ";" }
 
+instructions = { instruction+ }
+
 file = { description ~ tape ~ initial_state ~ final_state ~ composition ~ instruction+ ~ EOI }
