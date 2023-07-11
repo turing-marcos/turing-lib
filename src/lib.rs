@@ -22,15 +22,15 @@ pub const LIBRARIES: [Library; 2] = [
     Library {
         name: Cow::Borrowed("sum"),
         description: Cow::Borrowed("x + y"),
-        initial_state: Cow::Borrowed("p0"),
-        final_state: Cow::Borrowed("p2"),
+        initial_state: Cow::Borrowed("q0"),
+        final_state: Cow::Borrowed("q2"),
         code: Cow::Borrowed(include_str!("./composition/sum.tm"))
     },
     Library {
         name: Cow::Borrowed("duplicate"),
         description: Cow::Borrowed("2x"),
-        initial_state: Cow::Borrowed("p0"),
-        final_state: Cow::Borrowed("pf"),
+        initial_state: Cow::Borrowed("q0"),
+        final_state: Cow::Borrowed("qf"),
         code: Cow::Borrowed(include_str!("./composition/duplicate.tm"))
     },
 ];
@@ -201,34 +201,15 @@ mod test_composition {
 
     #[test]
     fn parse_composition_valid(){
-        let test = "sum_test()";
+        let test = "compose = { sum_test };";
 
         parses_to! {
             parser: TuringParser,
             input: test,
             rule: Rule::composition,
             tokens: [
-                composition(0, 10, [
-                    function_name(0, 8)
-                ])
-            ]
-        }
-    }
-
-
-    #[test]
-    fn parse_composition_instruction_valid(){
-        let test = "sum_test();";
-
-        parses_to! {
-            parser: TuringParser,
-            input: test,
-            rule: Rule::instruction,
-            tokens: [
-                instruction(0, 11, [
-                    composition(0, 10, [
-                        function_name(0, 8)
-                    ])
+                composition(0, 23, [
+                    function_name(12, 20)
                 ])
             ]
         }

@@ -95,6 +95,21 @@ impl TuringMachine {
                         .collect();
                     debug!("The final tape state is {:?}", final_states);
                 }
+                Rule::composition => {
+                    debug!("Entered composition rule");
+                    for r in record.into_inner() {
+                        match r.as_rule() {
+                            Rule::function_name => {
+                                println!("Found composition function \"{}\"", r.as_str());
+                            }
+                            _ => warn!(
+                                "Unhandled: ({:?}, {})",
+                                r.as_rule(),
+                                r.into_inner().as_str()
+                            ),
+                        }
+                    }
+                }
                 Rule::instruction => {
                     let tmp = TuringInstruction::from(record.into_inner());
                     instructions.insert(

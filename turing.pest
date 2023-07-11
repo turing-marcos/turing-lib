@@ -3,7 +3,7 @@ COMMENT = _{ "/"{2} ~ (LETTER | NUMBER | SPACE_SEPARATOR | PUNCTUATION | SYMBOL 
 
 state = @{ASCII_ALPHA+ ~ ASCII_DIGIT*}
 value = { "0" | "1" }
-movement = { "R" | "L" | "H" | "N" }
+movement = { "R" | "L" | "H" | "N" | "D" | "I" }
 description = @{ SOI ~ ("/" ~ COMMENT)? }
 
 tape = { "{" ~ value* ~ "}" ~ ";" }
