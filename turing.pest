@@ -10,7 +10,7 @@ tape = { "{" ~ value* ~ "}" ~ ";" }
 final_state = { "F" ~ "=" ~ "{" ~ state ~ ("," ~ state)* ~ "}" ~ ";" }
 initial_state = { "I" ~ "=" ~ "{" ~ state ~ "}" ~ ";" }
 function_name = @{ ASCII_ALPHA_LOWER ~ (ASCII_ALPHANUMERIC | "_")* }
-composition = { function_name ~ "()"}
-instruction = { (( "(" ~ state ~ "," ~ value ~ "," ~ value ~ "," ~ movement ~ "," ~ state ~ ")" ) | composition ) ~ ";" }
+composition = { "compose" ~ "=" ~ "{" ~ ((function_name ~ ",")*  ~ function_name) ~ "}" ~ ";"}
+instruction = { "(" ~ state ~ "," ~ value ~ "," ~ value ~ "," ~ movement ~ "," ~ state ~ ")" ~ ";" }
 
-file = { description ~ tape ~ initial_state ~ final_state ~ instruction+ ~ EOI }
+file = { description ~ tape ~ initial_state ~ final_state ~ composition ~ instruction+ ~ EOI }
