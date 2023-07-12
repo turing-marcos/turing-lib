@@ -15,4 +15,4 @@ instruction = { "(" ~ state ~ "," ~ value ~ "," ~ value ~ "," ~ movement ~ "," ~
 
 instructions = { instruction+ }
 
-file = { description ~ tape ~ initial_state ~ final_state ~ composition ~ instruction+ ~ EOI }
+file = { description ~ tape ~ initial_state ~ final_state ~ composition? ~ instruction+ ~ EOI }
