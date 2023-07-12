@@ -16,6 +16,7 @@ pub struct Library {
     pub description: Cow<'static, str>,
     pub initial_state: Cow<'static, str>,
     pub final_state: Cow<'static, str>,
+    pub used_states: Cow<'static, [Cow<'static, str>]>,
     pub code: Cow<'static, str>,
 }
 
@@ -46,6 +47,11 @@ pub const LIBRARIES: [Library; 2] = [
         description: Cow::Borrowed("x + y"),
         initial_state: Cow::Borrowed("q0"),
         final_state: Cow::Borrowed("q2"),
+        used_states: Cow::Borrowed(&[
+            Cow::Borrowed("q0"),
+            Cow::Borrowed("q1"),
+            Cow::Borrowed("q2"),
+        ]),
         code: Cow::Borrowed(include_str!("./composition/sum.tm")),
     },
     Library {
@@ -53,6 +59,15 @@ pub const LIBRARIES: [Library; 2] = [
         description: Cow::Borrowed("2x"),
         initial_state: Cow::Borrowed("q0"),
         final_state: Cow::Borrowed("qf"),
+        used_states: Cow::Borrowed(&[
+            Cow::Borrowed("q0"),
+            Cow::Borrowed("q1"),
+            Cow::Borrowed("q2"),
+            Cow::Borrowed("q3"),
+            Cow::Borrowed("q4"),
+            Cow::Borrowed("q5"),
+            Cow::Borrowed("qf")
+        ]),
         code: Cow::Borrowed(include_str!("./composition/duplicate.tm")),
     },
 ];
