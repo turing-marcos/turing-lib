@@ -41,7 +41,7 @@ impl Library {
     }
 }
 
-pub const LIBRARIES: [Library; 2] = [
+pub const LIBRARIES: [Library; 5] = [
     Library {
         name: Cow::Borrowed("sum"),
         description: Cow::Borrowed("x + y"),
@@ -55,8 +55,8 @@ pub const LIBRARIES: [Library; 2] = [
         code: Cow::Borrowed(include_str!("./composition/sum.tm")),
     },
     Library {
-        name: Cow::Borrowed("duplicate"),
-        description: Cow::Borrowed("2x"),
+        name: Cow::Borrowed("x2"),
+        description: Cow::Borrowed("x * 2"),
         initial_state: Cow::Borrowed("q0"),
         final_state: Cow::Borrowed("qf"),
         used_states: Cow::Borrowed(&[
@@ -66,9 +66,62 @@ pub const LIBRARIES: [Library; 2] = [
             Cow::Borrowed("q3"),
             Cow::Borrowed("q4"),
             Cow::Borrowed("q5"),
-            Cow::Borrowed("qf")
+            Cow::Borrowed("qf"),
         ]),
         code: Cow::Borrowed(include_str!("./composition/duplicate.tm")),
+    },
+    Library {
+        name: Cow::Borrowed("mod"),
+        description: Cow::Borrowed("x mod y"),
+        initial_state: Cow::Borrowed("q0"),
+        final_state: Cow::Borrowed("qf"),
+        used_states: Cow::Borrowed(&[
+            Cow::Borrowed("q0"),
+            Cow::Borrowed("q1"),
+            Cow::Borrowed("q2"),
+            Cow::Borrowed("q2"),
+            Cow::Borrowed("q4"),
+            Cow::Borrowed("q5"),
+            Cow::Borrowed("q5"),
+            Cow::Borrowed("q6"),
+            Cow::Borrowed("q7"),
+            Cow::Borrowed("q8"),
+            Cow::Borrowed("q9"),
+            Cow::Borrowed("q10"),
+            Cow::Borrowed("q11"),
+            Cow::Borrowed("qf"),
+        ]),
+        code: Cow::Borrowed(include_str!("./composition/mod.tm")),
+    },
+    Library {
+        name: Cow::Borrowed("div2"),
+        description: Cow::Borrowed("x div 2"),
+        initial_state: Cow::Borrowed("q0"),
+        final_state: Cow::Borrowed("qf"),
+        used_states: Cow::Borrowed(&[
+            Cow::Borrowed("q0"),
+            Cow::Borrowed("q1"),
+            Cow::Borrowed("q2"),
+            Cow::Borrowed("qf"),
+        ]),
+        code: Cow::Borrowed(include_str!("./composition/div2.tm")),
+    },
+    Library {
+        name: Cow::Borrowed("bound_diff"),
+        description: Cow::Borrowed("x ∸ y"),
+        initial_state: Cow::Borrowed("q0"),
+        final_state: Cow::Borrowed("qf"),
+        used_states: Cow::Borrowed(&[
+            Cow::Borrowed("q0"),
+            Cow::Borrowed("q1"),
+            Cow::Borrowed("q2"),
+            Cow::Borrowed("q3"),
+            Cow::Borrowed("q4"),
+            Cow::Borrowed("q5"),
+            Cow::Borrowed("q6"),
+            Cow::Borrowed("qf"),
+        ]),
+        code: Cow::Borrowed(include_str!("./composition/bound_diff.tm")),
     },
 ];
 
