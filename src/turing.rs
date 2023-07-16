@@ -17,14 +17,32 @@ pub struct TuringParser;
 #[derive(Debug, Clone)]
 /// A Turing machine
 pub struct TuringMachine {
+    /// The dictionary of instructions for the machine.
     pub instructions: HashMap<(String, bool), TuringInstruction>,
+
+    /// The final states of the machine. If the machine reaches one of these states, it will stop.
     pub final_states: Vec<String>,
+
+    /// The current state of the machine.
     pub current_state: String,
+
+    /// The position of the head on the tape.
     pub tape_position: usize,
+
+    /// The binary tape of the machine.
     pub tape: Vec<bool>,
+
+    /// The frequencies of the states. Used to detect infinite loops.
     pub frequencies: HashMap<String, usize>,
+
+    /// The description of the machine. Found in the `///` comments at the top of the file.
     pub description: Option<String>,
+
+    /// The composed libraries that the machine uses.
+    /// Used only as information, since their instructions are already compiled into the machine.
     pub composed_libs: Vec<Library>,
+
+    /// The actual code of the machine. Used for resetting the machine and debugging.
     pub code: String,
 }
 
@@ -41,11 +59,7 @@ impl TuringMachine {
 
         let file = match TuringParser::parse(Rule::file, code) {
             Ok(mut f) => f.next().unwrap(),
-            Err(error) => {
-                return Err(CompilerError::FileRuleError {
-                    error: error.variant,
-                })
-            }
+            Err(error) => return Err(CompilerError::FileRuleError { error }),
         };
 
         for record in file.into_inner() {
@@ -252,35 +266,22 @@ impl TuringMachine {
     pub fn handle_error(error: CompilerError) {
         error!("I found an error while parsing the file!");
 
-        match error {
-            CompilerError::SyntaxError {
-                position,
-                message,
-                code: _,
-                expected,
-                found,
-            } => {
-                error!(
-                    "Error at {}: {} - Expected {:?} but found {:?}",
-                    position, message, expected, found
-                );
-                error!(
-                    "\t {: ^width1$}{:^^width2$}", //{: ^width3$}",
-                    "^",
-                    " ",
-                    //" ",
-                    width1 = position.start.1 - 1,
-                    width2 = position.end.unwrap().1 - position.start.1
-                );
-            }
-            CompilerError::FileRuleError { error } => match error {
-                pest::error::ErrorVariant::ParsingError {
-                    positives,
-                    negatives,
-                } => error!("Expected {:?}, found {:?}", positives, negatives),
-                pest::error::ErrorVariant::CustomError { message } => error!("\t{}", message),
-            },
-        }
+        let position = error.position();
+
+        debug!("Error position: {:?}", position);
+
+        error!(
+            "Error at {}: {}\n\t{}\n\t{:~>width1$}{:^<width2$}{:~<width3$}",
+            position,
+            error.message(),
+            error.code(),
+            "~",
+            "^",
+            "~",
+            width1 = position.start.1,
+            width2 = position.end.unwrap_or((0, position.start.1 +1)).1 - position.start.1,
+            width3 = error.code().len() - position.end.unwrap_or((0, position.start.1 +1)).1
+        );
 
         println!("\nPress enter to exit");
 
