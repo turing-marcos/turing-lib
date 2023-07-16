@@ -19,7 +19,7 @@ Check out the [online demo](https://turing.coldboard.net) (here is [the code](ht
 Add the following to your `Cargo.toml` file under `[dependencies]`:
 
 ```toml
-turing_lib = 1.1.3
+turing_lib = 2.0.0
 ```
 or
 ```toml
@@ -38,9 +38,9 @@ use turing_lib::TuringMachine;
 fn main() {
     let unparsed_file = fs::read_to_string(&"./some_file").expect("cannot read file");
 
-    let tm = match TuringMachine::new(&unparsed_file) {
+    let (tm, warnings) = match TuringMachine::new(&unparsed_file) {
         Ok(t) => t,
-        Err(e) => {
+        Err(e: CompilerError) => {
             handle_error(e, file);
             std::process::exit(1);
         }
