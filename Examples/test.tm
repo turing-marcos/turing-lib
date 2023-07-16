@@ -4,6 +4,7 @@
 
 I = {q0};
 F = {q2};
+compose = { sum };
 
 (q0, 1, 0, R, q1);
 

@@ -1,9 +1,12 @@
 use log::{debug, error, info, warn};
-use pest::{error::ErrorVariant, Parser, Position};
+use pest::Parser;
 use pest_derive::Parser;
 use std::{collections::HashMap, fmt::Write};
 
-use crate::{instruction::Movement, TuringInstruction};
+use crate::{
+    instruction::Movement, warnings::ErrorPosition, CompilerError, CompilerWarning, Library,
+    TuringInstruction,
+};
 
 use super::TuringOutput;
 
@@ -14,31 +17,54 @@ pub struct TuringParser;
 #[derive(Debug, Clone)]
 /// A Turing machine
 pub struct TuringMachine {
+    /// The dictionary of instructions for the machine.
     pub instructions: HashMap<(String, bool), TuringInstruction>,
+
+    /// The final states of the machine. If the machine reaches one of these states, it will stop.
     pub final_states: Vec<String>,
+
+    /// The current state of the machine.
     pub current_state: String,
+
+    /// The position of the head on the tape.
     pub tape_position: usize,
+
+    /// The binary tape of the machine.
     pub tape: Vec<bool>,
+
+    /// The frequencies of the states. Used to detect infinite loops.
     pub frequencies: HashMap<String, usize>,
+
+    /// The description of the machine. Found in the `///` comments at the top of the file.
     pub description: Option<String>,
+
+    /// The composed libraries that the machine uses.
+    /// Used only as information, since their instructions are already compiled into the machine.
+    pub composed_libs: Vec<Library>,
+
+    /// The actual code of the machine. Used for resetting the machine and debugging.
     pub code: String,
 }
 
 impl TuringMachine {
     /// Create a new Turing machine from a string of code
-    pub fn new(code: &str) -> Result<Self, pest::error::Error<Rule>> {
+    pub fn new(code: &str) -> Result<(Self, Vec<CompilerWarning>), CompilerError> {
         let mut instructions: HashMap<(String, bool), TuringInstruction> = HashMap::new();
         let mut final_states: Vec<String> = Vec::new();
         let mut current_state: String = String::new();
         let mut tape: Vec<bool> = Vec::new();
         let mut description: Option<String> = None;
+        let mut composed: Vec<Library> = Vec::new();
+        let mut warnings: Vec<CompilerWarning> = Vec::new();
 
         let file = match TuringParser::parse(Rule::file, code) {
             Ok(mut f) => f.next().unwrap(),
-            Err(e) => return Err(e),
+            Err(error) => return Err(CompilerError::FileRuleError { error }),
         };
 
         for record in file.into_inner() {
+            let record_span = &record.as_span();
+
             match record.as_rule() {
                 Rule::description => {
                     let s = record.as_str();
@@ -53,6 +79,12 @@ impl TuringMachine {
                         "Entered tape rule: {}",
                         record.clone().into_inner().as_str()
                     );
+
+                    // Used to extract the position of the error (if any)
+                    // A span contains the start and end position of the error, while a Pair only contains the start position
+                    let span = record.line_col();
+
+                    let code = record.clone().into_inner().as_str();
 
                     for r in record.into_inner() {
                         match r.as_rule() {
@@ -76,12 +108,14 @@ impl TuringMachine {
 
                     if tape.is_empty() || !tape.contains(&true) {
                         error!("The tape did not contain at least a 1");
-                        return Err(pest::error::Error::new_from_pos(
-                            ErrorVariant::CustomError {
-                                message: String::from("Expected at least a 1 in the tape"),
-                            },
-                            Position::from_start(""),
-                        ));
+
+                        return Err(CompilerError::SyntaxError {
+                            position: span.into(),
+                            message: String::from("Expected at least a 1 in the tape"),
+                            code: String::from(code),
+                            expected: Rule::tape,
+                            found: None,
+                        });
                     }
                 }
                 Rule::initial_state => {
@@ -95,8 +129,66 @@ impl TuringMachine {
                         .collect();
                     debug!("The final tape state is {:?}", final_states);
                 }
+                Rule::composition => {
+                    debug!("Entered composition rule");
+                    for r in record.into_inner() {
+                        match r.as_rule() {
+                            Rule::function_name => {
+                                debug!("Found composition of: {}", r.as_str());
+
+                                let mut lib: Option<Library> = None;
+
+                                for l in super::LIBRARIES {
+                                    if l.name == r.as_str() {
+                                        lib = Some(l);
+                                        break;
+                                    }
+                                }
+
+                                if let Some(library) = lib {
+                                    debug!("Found the library, composing...");
+
+                                    instructions.extend(library.get_instructions());
+
+                                    composed.push(library.clone());
+                                } else {
+                                    error!("Could not find the library \"{}\"", r.as_str());
+
+                                    let (line, column) = r.line_col();
+
+                                    return Err(CompilerError::SyntaxError {
+                                        position: ErrorPosition::new((line, column), None),
+                                        message: format!(
+                                            "Could not find the library \"{}\"",
+                                            r.as_str()
+                                        ),
+                                        code: String::from(r.as_str()),
+                                        expected: r.as_rule(),
+                                        found: None,
+                                    });
+                                }
+                            }
+                            _ => warn!(
+                                "Unhandled: ({:?}, {})",
+                                r.as_rule(),
+                                r.into_inner().as_str()
+                            ),
+                        }
+                    }
+                }
                 Rule::instruction => {
                     let tmp = TuringInstruction::from(record.into_inner());
+
+                    if instructions.contains_key(&(tmp.from_state.clone(), tmp.from_value.clone()))
+                    {
+                        warn!("Instruction {} already exists, overwriting it", tmp.clone());
+
+                        warnings.push(CompilerWarning::StateOverwrite {
+                            position: record_span.into(),
+                            state: tmp.from_state.clone(),
+                            value_from: tmp.from_value.clone(),
+                        })
+                    }
                     instructions.insert(
                         (tmp.from_state.clone(), tmp.from_value.clone()),
                         tmp.clone(),
@@ -121,16 +213,20 @@ impl TuringMachine {
 
         debug!("The instructions are {:?}", instructions);
 
-        Ok(Self {
-            instructions,
-            final_states,
-            current_state,
-            tape_position,
-            tape,
-            frequencies: HashMap::new(),
-            description,
-            code: String::from(code),
-        })
+        Ok((
+            Self {
+                instructions,
+                final_states,
+                current_state,
+                tape_position,
+                tape,
+                frequencies: HashMap::new(),
+                description,
+                composed_libs: composed,
+                code: String::from(code),
+            },
+            warnings,
+        ))
     }
 
     /// Create a new empty Turing machine
@@ -160,46 +256,31 @@ impl TuringMachine {
             tape,
             frequencies: HashMap::new(),
             description,
+            composed_libs: Vec::new(),
             code: String::new(),
         }
     }
 
     /// Parse a Turing machine code syntax error
     /// and print it to the console
-    pub fn handle_error(e: pest::error::Error<Rule>) {
+    pub fn handle_error(error: CompilerError) {
         error!("I found an error while parsing the file!");
 
-        match e.clone().variant {
-            pest::error::ErrorVariant::ParsingError {
-                positives,
-                negatives,
-            } => error!("Expected {:?}, found {:?}", positives, negatives),
-            pest::error::ErrorVariant::CustomError { message } => error!("\t{}", message),
-        };
+        let position = error.position();
 
-        let mut cols = (0, 0);
-        match e.line_col {
-            pest::error::LineColLocation::Pos((line, col)) => {
-                error!("Line {}, column {}: ", line, col);
-                cols.0 = col;
-                cols.1 = col + 1;
-            }
-            pest::error::LineColLocation::Span((line1, col1), (line2, col2)) => {
-                error!("From line {}:{} to {}:{}. Found:", line1, col1, line2, col2);
-                cols.0 = col1;
-                cols.1 = col2;
-            }
-        };
+        debug!("Error position: {:?}", position);
 
-        error!("\t\"{}\"", e.line());
         error!(
-            "\t {: ^width1$}{:^^width2$}{: ^width3$}",
+            "Error at {}: {}\n\t{}\n\t{:~>width1$}{:^<width2$}{:~<width3$}",
+            position,
+            error.message(),
+            error.code(),
+            "~",
             "^",
-            " ",
-            " ",
-            width1 = cols.0 - 1,
-            width2 = cols.1 - cols.0,
-            width3 = e.line().len() - cols.1
+            "~",
+            width1 = position.start.1,
+            width2 = position.end.unwrap_or((0, position.start.1 + 1)).1 - position.start.1,
+            width3 = error.code().len() - position.end.unwrap_or((0, position.start.1 + 1)).1
         );
 
         println!("\nPress enter to exit");
