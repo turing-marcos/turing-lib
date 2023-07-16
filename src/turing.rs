@@ -279,8 +279,8 @@ impl TuringMachine {
             "^",
             "~",
             width1 = position.start.1,
-            width2 = position.end.unwrap_or((0, position.start.1 +1)).1 - position.start.1,
-            width3 = error.code().len() - position.end.unwrap_or((0, position.start.1 +1)).1
+            width2 = position.end.unwrap_or((0, position.start.1 + 1)).1 - position.start.1,
+            width3 = error.code().len() - position.end.unwrap_or((0, position.start.1 + 1)).1
         );
 
         println!("\nPress enter to exit");

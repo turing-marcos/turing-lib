@@ -59,7 +59,9 @@ impl CompilerError {
     /// Get the expected message. If the error is a `FileRuleError`, the message will be extracted from `pest::error::Error`, otherwise it will be `Expected {expected:?}, got {found:?}`
     pub fn get_message_expected(&self) -> String {
         match &self {
-            CompilerError::SyntaxError { expected, found, .. } => format!("Expected {:?}, found {:?}", expected, found),
+            CompilerError::SyntaxError {
+                expected, found, ..
+            } => format!("Expected {:?}, found {:?}", expected, found),
             CompilerError::FileRuleError { error } => String::from(error.variant.message()),
         }
     }
@@ -122,7 +124,7 @@ impl CompilerError {
     pub fn found(&self) -> Option<Rule> {
         match self {
             CompilerError::SyntaxError { found, .. } => *found,
-            CompilerError::FileRuleError { error , ..} => match &error.variant {
+            CompilerError::FileRuleError { error, .. } => match &error.variant {
                 pest::error::ErrorVariant::ParsingError { positives, .. } => {
                     Some(positives.first().unwrap().clone())
                 }
