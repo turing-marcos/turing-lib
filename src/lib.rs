@@ -1,6 +1,7 @@
 mod instruction;
 mod output;
 mod turing;
+mod warnings;
 
 use std::{borrow::Cow, collections::HashMap};
 
@@ -9,6 +10,7 @@ pub use output::TuringOutput;
 use pest::Parser;
 use serde::{Deserialize, Serialize};
 pub use turing::{Rule, TuringMachine, TuringParser};
+pub use warnings::{CompilerError, CompilerWarning, ErrorPosition};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Library {
@@ -129,11 +131,11 @@ pub const LIBRARIES: [Library; 5] = [
 mod test_parsing {
     use std::fs;
 
+    use crate::warnings::ErrorPosition;
+    use crate::CompilerError;
     use crate::Rule;
     use crate::TuringMachine;
     use crate::TuringParser;
-    use pest::error::ErrorVariant;
-    use pest::Position;
     use pest::{consumes_to, parses_to};
 
     #[test]
@@ -190,12 +192,14 @@ mod test_parsing {
 
         let tm_error = TuringMachine::new(test);
 
-        let expected: pest::error::Error<Rule> = pest::error::Error::new_from_pos(
-            ErrorVariant::CustomError {
-                message: String::from("Expected at least a 1 in the tape"),
-            },
-            Position::from_start(""),
-        );
+        let expected: CompilerError = CompilerError::SyntaxError {
+            position: ErrorPosition::new((1, 9), None), // FIXME: Positions are not correct
+            message: String::from("Expected at least a 1 in the tape"),
+            code: String::from("000"),
+            expected: Rule::tape,
+            found: None,
+        };
+
         assert_eq!(tm_error.unwrap_err(), expected);
     }
 
@@ -254,7 +258,7 @@ mod test_parsing {
     #[test]
     fn parse_file() {
         let unparsed_file = fs::read_to_string("Examples/Example1.tm").expect("cannot read file");
-        let tm = match TuringMachine::new(&unparsed_file) {
+        let (tm, _) = match TuringMachine::new(&unparsed_file) {
             Ok(t) => t,
             Err(e) => {
                 TuringMachine::handle_error(e);

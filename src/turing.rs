@@ -1,9 +1,12 @@
 use log::{debug, error, info, warn};
-use pest::{error::ErrorVariant, Parser, Position};
+use pest::Parser;
 use pest_derive::Parser;
 use std::{collections::HashMap, fmt::Write};
 
-use crate::{instruction::Movement, Library, TuringInstruction};
+use crate::{
+    instruction::Movement, warnings::ErrorPosition, CompilerError, CompilerWarning, Library,
+    TuringInstruction,
+};
 
 use super::TuringOutput;
 
@@ -27,20 +30,27 @@ pub struct TuringMachine {
 
 impl TuringMachine {
     /// Create a new Turing machine from a string of code
-    pub fn new(code: &str) -> Result<Self, pest::error::Error<Rule>> {
+    pub fn new(code: &str) -> Result<(Self, Vec<CompilerWarning>), CompilerError> {
         let mut instructions: HashMap<(String, bool), TuringInstruction> = HashMap::new();
         let mut final_states: Vec<String> = Vec::new();
         let mut current_state: String = String::new();
         let mut tape: Vec<bool> = Vec::new();
         let mut description: Option<String> = None;
         let mut composed: Vec<Library> = Vec::new();
+        let mut warnings: Vec<CompilerWarning> = Vec::new();
 
         let file = match TuringParser::parse(Rule::file, code) {
             Ok(mut f) => f.next().unwrap(),
-            Err(e) => return Err(e),
+            Err(error) => {
+                return Err(CompilerError::FileRuleError {
+                    error: error.variant,
+                })
+            }
         };
 
         for record in file.into_inner() {
+            let record_span = &record.as_span();
+
             match record.as_rule() {
                 Rule::description => {
                     let s = record.as_str();
@@ -55,6 +65,12 @@ impl TuringMachine {
                         "Entered tape rule: {}",
                         record.clone().into_inner().as_str()
                     );
+
+                    // Used to extract the position of the error (if any)
+                    // A span contains the start and end position of the error, while a Pair only contains the start position
+                    let span = record.line_col();
+
+                    let code = record.clone().into_inner().as_str();
 
                     for r in record.into_inner() {
                         match r.as_rule() {
@@ -78,12 +94,14 @@ impl TuringMachine {
 
                     if tape.is_empty() || !tape.contains(&true) {
                         error!("The tape did not contain at least a 1");
-                        return Err(pest::error::Error::new_from_pos(
-                            ErrorVariant::CustomError {
-                                message: String::from("Expected at least a 1 in the tape"),
-                            },
-                            Position::from_start(""),
-                        ));
+
+                        return Err(CompilerError::SyntaxError {
+                            position: span.into(),
+                            message: String::from("Expected at least a 1 in the tape"),
+                            code: String::from(code),
+                            expected: Rule::tape,
+                            found: None,
+                        });
                     }
                 }
                 Rule::initial_state => {
@@ -121,15 +139,19 @@ impl TuringMachine {
                                     composed.push(library.clone());
                                 } else {
                                     error!("Could not find the library \"{}\"", r.as_str());
-                                    return Err(pest::error::Error::new_from_pos(
-                                        ErrorVariant::CustomError {
-                                            message: format!(
-                                                "Could not find the library \"{}\"",
-                                                r.as_str()
-                                            ),
-                                        },
-                                        Position::from_start(""),
-                                    ));
+
+                                    let (line, column) = r.line_col();
+
+                                    return Err(CompilerError::SyntaxError {
+                                        position: ErrorPosition::new((line, column), None),
+                                        message: format!(
+                                            "Could not find the library \"{}\"",
+                                            r.as_str()
+                                        ),
+                                        code: String::from(r.as_str()),
+                                        expected: r.as_rule(),
+                                        found: None,
+                                    });
                                 }
                             }
                             _ => warn!(
@@ -142,6 +164,17 @@ impl TuringMachine {
                 }
                 Rule::instruction => {
                     let tmp = TuringInstruction::from(record.into_inner());
+
+                    if instructions.contains_key(&(tmp.from_state.clone(), tmp.from_value.clone()))
+                    {
+                        warn!("Instruction {} already exists, overwriting it", tmp.clone());
+
+                        warnings.push(CompilerWarning::StateOverwrite {
+                            position: record_span.into(),
+                            state: tmp.from_state.clone(),
+                            value_from: tmp.from_value.clone(),
+                        })
+                    }
                     instructions.insert(
                         (tmp.from_state.clone(), tmp.from_value.clone()),
                         tmp.clone(),
@@ -166,17 +199,20 @@ impl TuringMachine {
 
         debug!("The instructions are {:?}", instructions);
 
-        Ok(Self {
-            instructions,
-            final_states,
-            current_state,
-            tape_position,
-            tape,
-            frequencies: HashMap::new(),
-            description,
-            composed_libs: composed,
-            code: String::from(code),
-        })
+        Ok((
+            Self {
+                instructions,
+                final_states,
+                current_state,
+                tape_position,
+                tape,
+                frequencies: HashMap::new(),
+                description,
+                composed_libs: composed,
+                code: String::from(code),
+            },
+            warnings,
+        ))
     }
 
     /// Create a new empty Turing machine
@@ -213,41 +249,38 @@ impl TuringMachine {
 
     /// Parse a Turing machine code syntax error
     /// and print it to the console
-    pub fn handle_error(e: pest::error::Error<Rule>) {
+    pub fn handle_error(error: CompilerError) {
         error!("I found an error while parsing the file!");
 
-        match e.clone().variant {
-            pest::error::ErrorVariant::ParsingError {
-                positives,
-                negatives,
-            } => error!("Expected {:?}, found {:?}", positives, negatives),
-            pest::error::ErrorVariant::CustomError { message } => error!("\t{}", message),
-        };
-
-        let mut cols = (0, 0);
-        match e.line_col {
-            pest::error::LineColLocation::Pos((line, col)) => {
-                error!("Line {}, column {}: ", line, col);
-                cols.0 = col;
-                cols.1 = col + 1;
+        match error {
+            CompilerError::SyntaxError {
+                position,
+                message,
+                code: _,
+                expected,
+                found,
+            } => {
+                error!(
+                    "Error at {}: {} - Expected {:?} but found {:?}",
+                    position, message, expected, found
+                );
+                error!(
+                    "\t {: ^width1$}{:^^width2$}", //{: ^width3$}",
+                    "^",
+                    " ",
+                    //" ",
+                    width1 = position.start.1 - 1,
+                    width2 = position.end.unwrap().1 - position.start.1
+                );
             }
-            pest::error::LineColLocation::Span((line1, col1), (line2, col2)) => {
-                error!("From line {}:{} to {}:{}. Found:", line1, col1, line2, col2);
-                cols.0 = col1;
-                cols.1 = col2;
-            }
-        };
-
-        error!("\t\"{}\"", e.line());
-        error!(
-            "\t {: ^width1$}{:^^width2$}{: ^width3$}",
-            "^",
-            " ",
-            " ",
-            width1 = cols.0 - 1,
-            width2 = cols.1 - cols.0,
-            width3 = e.line().len() - cols.1
-        );
+            CompilerError::FileRuleError { error } => match error {
+                pest::error::ErrorVariant::ParsingError {
+                    positives,
+                    negatives,
+                } => error!("Expected {:?}, found {:?}", positives, negatives),
+                pest::error::ErrorVariant::CustomError { message } => error!("\t{}", message),
+            },
+        }
 
         println!("\nPress enter to exit");
 
