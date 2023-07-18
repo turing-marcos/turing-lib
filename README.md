@@ -19,7 +19,7 @@ Check out the [online demo](https://turing.coldboard.net) (here is [the code](ht
 Add the following to your `Cargo.toml` file under `[dependencies]`:
 
 ```toml
-turing_lib = 2.0.0
+turing_lib = 2.0.2
 ```
 or
 ```toml

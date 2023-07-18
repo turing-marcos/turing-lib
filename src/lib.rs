@@ -275,6 +275,7 @@ mod test_parsing {
 
 #[cfg(test)]
 mod test_composition {
+    use crate::LIBRARIES;
     use crate::Rule;
     use crate::TuringParser;
     use pest::{consumes_to, parses_to};
@@ -306,6 +307,32 @@ mod test_composition {
                     function_name(12, 20)
                 ])
             ]
+        }
+    }
+
+    #[test]
+    fn parse_multiple_compositions() {
+        let test = "compose = {sum, diff};";
+
+        parses_to! {
+            parser: TuringParser,
+            input: test,
+            rule: Rule::composition,
+            tokens: [
+                composition(0, 22, [
+                    function_name(11, 14),
+                    function_name(16, 20)
+                ])
+            ]
+        }
+    }
+
+    #[test]
+    // Test that all the libraries are correctly parsed
+    // (should not panic)
+    fn libraries() {
+        for lib in LIBRARIES {
+            lib.get_instructions();
         }
     }
 }
