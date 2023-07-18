@@ -1,6 +1,6 @@
 [package]
 name = "turing-lib"
-version = "2.0.2"
+version = "2.0.3"
 edition = "2021"
 authors = ["Marcos Gutiérrez Alonso <uo272509@uniovi.es>"]
 repository = "https://github.com/turing-marcos/turing-lib"
