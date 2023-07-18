@@ -43,22 +43,21 @@ impl Library {
     }
 }
 
-
 /// Array of all the libraries that are included in the compiler.
 /// # List of Libraries
-/// 
+///
 /// ## sum
 /// Adds two numbers together.
-/// 
+///
 /// ## x2
 /// Duplicates a number.
-/// 
+///
 /// ## mod
 /// Calculates the modulo of two numbers.
-/// 
+///
 /// ## div2
 /// Divides a number by two.
-/// 
+///
 /// ## bound_diff
 /// Calculates the difference between two numbers, but the result is always positive.
 pub const LIBRARIES: [Library; 5] = [
@@ -293,9 +292,9 @@ mod test_parsing {
 
 #[cfg(test)]
 mod test_composition {
-    use crate::LIBRARIES;
     use crate::Rule;
     use crate::TuringParser;
+    use crate::LIBRARIES;
     use pest::{consumes_to, parses_to};
 
     #[test]
