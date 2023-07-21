@@ -23,7 +23,7 @@ pub struct Library {
 }
 
 impl Library {
-    pub fn get_instructions(&self) -> HashMap<(String, bool), TuringInstruction> {
+    pub fn get_instructions(&self) -> Result<HashMap<(String, bool), TuringInstruction>, CompilerError> {
         let mut instructions: HashMap<(String, bool), TuringInstruction> = HashMap::new();
 
         let file = match TuringParser::parse(Rule::instructions, self.code.as_ref()) {
@@ -32,14 +32,17 @@ impl Library {
         };
 
         for record in file.into_inner() {
-            let tmp = TuringInstruction::from(record.into_inner());
+            let tmp = match TuringInstruction::from(record.into_inner()) {
+                Ok(i) => i,
+                Err(e) => return Err(e),
+            };
             instructions.insert(
                 (tmp.from_state.clone(), tmp.from_value.clone()),
                 tmp.clone(),
             );
         }
 
-        instructions
+        Ok(instructions)
     }
 }
 
@@ -351,7 +354,7 @@ mod test_composition {
     /// (should not panic)
     fn libraries() {
         for lib in LIBRARIES {
-            lib.get_instructions();
+            let _ = lib.get_instructions();
         }
     }
 

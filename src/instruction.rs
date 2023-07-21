@@ -1,10 +1,10 @@
 use std::{fmt::Display, str::FromStr};
 
-use crate::turing::Rule;
+use crate::{turing::Rule, CompilerError, ErrorPosition};
 use pest::iterators::Pairs;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 /// The possible movements of the tape head
 pub enum Movement {
     RIGHT,
@@ -13,14 +13,15 @@ pub enum Movement {
 }
 
 impl std::str::FromStr for Movement {
-    type Err = ();
+    type Err = String;
 
     /// Parse a movement from a string
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         match input {
-            "R" => Ok(Self::RIGHT),
-            "L" => Ok(Self::LEFT),
-            _ => Ok(Self::HALT),
+            "R" | "D" => Ok(Self::RIGHT),
+            "L" | "I" => Ok(Self::LEFT),
+            "H" | "N" => Ok(Self::HALT),
+            _ => Err(String::from(format!("\"{input}\" is an unknown movement"))),
         }
     }
 }
@@ -63,7 +64,7 @@ impl Display for TuringInstruction {
 
 impl TuringInstruction {
     /// Create an instruction from a `Pairs<Rule>` object
-    pub fn from(mut code: Pairs<Rule>) -> Self {
+    pub fn from(mut code: Pairs<Rule>) -> Result<Self, CompilerError> {
         let from_state = match code.next() {
             Some(s) => String::from(s.as_span().as_str()),
             None => panic!("The instruction lacks an initial state"),
@@ -78,7 +79,15 @@ impl TuringInstruction {
         };
 
         let movement = match code.next() {
-            Some(s) => Movement::from_str(s.as_span().as_str()).unwrap_or(Movement::HALT),
+            Some(s) => match Movement::from_str(s.as_span().as_str()) {
+                Ok(m) => m,
+                Err(message) => return Err(CompilerError::SyntaxError { 
+                    position: ErrorPosition::from(&s), 
+                    message,
+                    code: String::from(s.as_str()), 
+                    expected: Rule::movement, 
+                    found: None })
+            },
             None => panic!("The instruction lacks an initial state"),
         };
 
@@ -87,13 +96,13 @@ impl TuringInstruction {
             None => panic!("The instruction lacks a target state"),
         };
 
-        Self {
+        Ok(Self {
             from_state,
             from_value,
             to_value,
             movement,
             to_state,
-        }
+        })
     }
 
     /// Create a halt instruction when there is missing information
