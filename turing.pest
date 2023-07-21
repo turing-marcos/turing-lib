@@ -10,9 +10,12 @@ tape = { "{" ~ value* ~ "}" ~ ";" }
 final_state = { "F" ~ "=" ~ "{" ~ state ~ ("," ~ state)* ~ "}" ~ ";" }
 initial_state = { "I" ~ "=" ~ "{" ~ state ~ "}" ~ ";" }
 
+
+function_name = @{ ASCII_ALPHA_LOWER ~ (ASCII_ALPHANUMERIC | "_")* }
+composition = { "compose" ~ "=" ~ "{" ~ ((function_name ~ ",")*  ~ function_name) ~ "}" ~ ";"}
+
 initial_params = _{
-    ( tape | initial_state | final_state ) |
-    ( tape | initial_state | final_state | composition)
+    tape | initial_state | final_state | composition?
 }
 
 // Silent rule to accept the initial parameters in any order
@@ -22,11 +25,9 @@ definition = _{
     ~ (
       !PEEK_ALL
       ~ PUSH(initial_params)
-    ){2, 3}
+    ){3}
   }
 
-function_name = @{ ASCII_ALPHA_LOWER ~ (ASCII_ALPHANUMERIC | "_")* }
-composition = { "compose" ~ "=" ~ "{" ~ ((function_name ~ ",")*  ~ function_name) ~ "}" ~ ";"}
 instruction = { "(" ~ state ~ "," ~ value ~ "," ~ value ~ "," ~ movement ~ "," ~ state ~ ")" ~ ";" }
 
 instructions = { instruction+ }
