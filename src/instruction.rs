@@ -81,12 +81,15 @@ impl TuringInstruction {
         let movement = match code.next() {
             Some(s) => match Movement::from_str(s.as_span().as_str()) {
                 Ok(m) => m,
-                Err(message) => return Err(CompilerError::SyntaxError { 
-                    position: ErrorPosition::from(&s), 
-                    message,
-                    code: String::from(s.as_str()), 
-                    expected: Rule::movement, 
-                    found: None })
+                Err(message) => {
+                    return Err(CompilerError::SyntaxError {
+                        position: ErrorPosition::from(&s),
+                        message,
+                        code: String::from(s.as_str()),
+                        expected: Rule::movement,
+                        found: None,
+                    })
+                }
             },
             None => panic!("The instruction lacks an initial state"),
         };

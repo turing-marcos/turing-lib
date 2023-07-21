@@ -435,10 +435,11 @@ impl TuringMachine {
 
     /// Returns true if the current state is a final state and the motion is to Halt
     pub fn finished(&self) -> bool {
-        self.final_states.contains(&self.current_state) && match self.get_current_instruction() {
-            Some(i) => i.movement == Movement::HALT,
-            None => false,
-        }
+        self.final_states.contains(&self.current_state)
+            && match self.get_current_instruction() {
+                Some(i) => i.movement == Movement::HALT,
+                None => false,
+            }
     }
 
     /// Returns the values of the tape

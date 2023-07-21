@@ -23,7 +23,9 @@ pub struct Library {
 }
 
 impl Library {
-    pub fn get_instructions(&self) -> Result<HashMap<(String, bool), TuringInstruction>, CompilerError> {
+    pub fn get_instructions(
+        &self,
+    ) -> Result<HashMap<(String, bool), TuringInstruction>, CompilerError> {
         let mut instructions: HashMap<(String, bool), TuringInstruction> = HashMap::new();
 
         let file = match TuringParser::parse(Rule::instructions, self.code.as_ref()) {
@@ -384,7 +386,5 @@ mod test_composition {
             tm.to_string(),
             "0 0 0 0 1 1 0 0 1 0 0 \n              ^       "
         );
-
-        
     }
 }
