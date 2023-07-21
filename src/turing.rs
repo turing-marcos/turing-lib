@@ -467,6 +467,9 @@ impl TuringMachine {
             steps += 1;
         }
 
+        self.step();
+        steps += 1;
+
         TuringOutput::Defined((
             steps,
             self.tape.iter().map(|v| if *v { 1 } else { 0 }).sum(),
