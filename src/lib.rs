@@ -23,7 +23,9 @@ pub struct Library {
 }
 
 impl Library {
-    pub fn get_instructions(&self) -> HashMap<(String, bool), TuringInstruction> {
+    pub fn get_instructions(
+        &self,
+    ) -> Result<HashMap<(String, bool), TuringInstruction>, CompilerError> {
         let mut instructions: HashMap<(String, bool), TuringInstruction> = HashMap::new();
 
         let file = match TuringParser::parse(Rule::instructions, self.code.as_ref()) {
@@ -32,14 +34,17 @@ impl Library {
         };
 
         for record in file.into_inner() {
-            let tmp = TuringInstruction::from(record.into_inner());
+            let tmp = match TuringInstruction::from(record.into_inner()) {
+                Ok(i) => i,
+                Err(e) => return Err(e),
+            };
             instructions.insert(
                 (tmp.from_state.clone(), tmp.from_value.clone()),
                 tmp.clone(),
             );
         }
 
-        instructions
+        Ok(instructions)
     }
 }
 
@@ -293,6 +298,8 @@ mod test_parsing {
 #[cfg(test)]
 mod test_composition {
     use crate::Rule;
+    use crate::TuringMachine;
+    use crate::TuringOutput;
     use crate::TuringParser;
     use crate::LIBRARIES;
     use pest::{consumes_to, parses_to};
@@ -345,11 +352,39 @@ mod test_composition {
     }
 
     #[test]
-    // Test that all the libraries are correctly parsed
-    // (should not panic)
+    /// Test that all the libraries are correctly parsed
+    /// (should not panic)
     fn libraries() {
         for lib in LIBRARIES {
-            lib.get_instructions();
+            let _ = lib.get_instructions();
         }
+    }
+
+    #[test]
+    /// Test compiling a program that uses composition and nothing else (no extra code)
+    /// Also tests that you can write the `compose`, tape (`{111011}`), initial state (`I = {q0}`) and final state (`F = {q2}`) in any order
+    fn composition() {
+        let test = "
+        compose = {sum};
+        
+        F = {q2};
+        {111011};
+        I = {q0};
+        ";
+
+        let mut tm = match TuringMachine::new(test) {
+            Ok(t) => t.0,
+            Err(e) => {
+                println!("{:?}", e);
+                std::process::exit(1);
+            }
+        };
+
+        assert_eq!(tm.final_result(), TuringOutput::Defined((5, 3)));
+
+        assert_eq!(
+            tm.to_string(),
+            "0 0 0 0 1 1 0 0 1 0 0 \n              ^       "
+        );
     }
 }

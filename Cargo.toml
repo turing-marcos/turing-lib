@@ -1,6 +1,6 @@
 [package]
 name = "turing-lib"
-version = "2.0.3"
+version = "2.1.0"
 edition = "2021"
 authors = ["Marcos Gutiérrez Alonso <uo272509@uniovi.es>"]
 repository = "https://github.com/turing-marcos/turing-lib"
@@ -12,8 +12,8 @@ exclude = ["**/Examples/"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-pest = "^2.5"
-pest_derive = "^2.5"
-log = "0.4.17"
-env_logger = "0.10.0"
+pest = "^2.7"
+pest_derive = "^2.7"
+log = "^0.4"
+env_logger = "^0.10"
 serde = { version = "^1.0", features = ["derive"] }

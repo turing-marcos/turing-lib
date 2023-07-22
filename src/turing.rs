@@ -148,7 +148,10 @@ impl TuringMachine {
                                 if let Some(library) = lib {
                                     debug!("Found the library, composing...");
 
-                                    instructions.extend(library.get_instructions());
+                                    instructions.extend(match library.get_instructions() {
+                                        Ok(i) => i,
+                                        Err(c_err) => return Err(c_err),
+                                    });
 
                                     composed.push(library.clone());
                                 } else {
@@ -177,7 +180,10 @@ impl TuringMachine {
                     }
                 }
                 Rule::instruction => {
-                    let tmp = TuringInstruction::from(record.into_inner());
+                    let tmp = match TuringInstruction::from(record.into_inner()) {
+                        Ok(i) => i,
+                        Err(c_err) => return Err(c_err),
+                    };
 
                     if instructions.contains_key(&(tmp.from_state.clone(), tmp.from_value.clone()))
                     {
@@ -203,6 +209,30 @@ impl TuringMachine {
                     warn!("Unhandled: {}", record.into_inner().as_str());
                 }
             }
+        }
+
+        if final_states.is_empty() {
+            error!("No final state given");
+
+            return Err(CompilerError::SyntaxError {
+                position: ErrorPosition::new((0, 0), None),
+                message: String::from("No final state given"),
+                code: String::from(code),
+                expected: Rule::final_state,
+                found: None,
+            });
+        }
+
+        if current_state.is_empty() {
+            error!("No initial state given");
+
+            return Err(CompilerError::SyntaxError {
+                position: ErrorPosition::new((0, 0), None),
+                message: String::from("No initial state given"),
+                code: String::from(code),
+                expected: Rule::initial_state,
+                found: None,
+            });
         }
 
         let mut tape_position = 0;
@@ -403,9 +433,13 @@ impl TuringMachine {
         self.frequencies = HashMap::new();
     }
 
-    /// Returns true if the current state is a final state
+    /// Returns true if the current state is a final state and the motion is to Halt
     pub fn finished(&self) -> bool {
-        return self.final_states.contains(&self.current_state);
+        self.final_states.contains(&self.current_state)
+            && match self.get_current_instruction() {
+                Some(i) => i.movement == Movement::HALT,
+                None => false,
+            }
     }
 
     /// Returns the values of the tape
@@ -466,6 +500,9 @@ impl TuringMachine {
             self.step();
             steps += 1;
         }
+
+        self.step();
+        steps += 1;
 
         TuringOutput::Defined((
             steps,

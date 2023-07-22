@@ -2,7 +2,17 @@
 
 ## [2.1.0] - 2023-07-22
 ### Added
-- The CHANGELOG.md file.
+- Syntax support for wrinting the definitions (`I`, `F`, `compose` and the tape) in any order.
+- Error handling for when there are no final states or no intial state.
+
+### Changed
+- Updated minor version of dependencies
+- Now parsing an instruction can return an error if the instruction is not valid.
+- Now defining instructions is optional. If no instructions are defined, the turing machine will be empty apart from the composed libraries.
+
+### Fixed
+- Syntax support for the movements `I` (Izquierda) and `D` (Derecha).
+- The `finished` function now takes into account the movement in addition to whether the state is final or not.
 
 ## [2.0.2] - 2023-07-18
 ### Fixed
