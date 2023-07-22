@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.1.1] - 2023-07-22
+### Fixed
+- The `finished` function now assumes that it has finished if the current instruction does not exist in the instruction set. This fixes a bug where the machine would not finish if the last instruction was not defined. 
+
 ## [2.1.0] - 2023-07-22
 ### Added
 - Syntax support for wrinting the definitions (`I`, `F`, `compose` and the tape) in any order.
@@ -12,7 +16,7 @@
 
 ### Fixed
 - Syntax support for the movements `I` (Izquierda) and `D` (Derecha).
-- The `finished` function now takes into account the movement in addition to whether the state is final or not.
+- The `finished` function now takes into account the movement in addition to whether the state is final or not. This is to avoid having to do an extra step after finishing to execute the last instruction.
 
 ## [2.0.2] - 2023-07-18
 ### Fixed

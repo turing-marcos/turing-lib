@@ -26,6 +26,9 @@ pub struct TuringMachine {
     /// The current state of the machine.
     pub current_state: String,
 
+    /// The previous state of the machine.
+    pub previous_state: Option<String>,
+
     /// The position of the head on the tape.
     pub tape_position: usize,
 
@@ -248,6 +251,7 @@ impl TuringMachine {
                 instructions,
                 final_states,
                 current_state,
+                previous_state: None,
                 tape_position,
                 tape,
                 frequencies: HashMap::new(),
@@ -282,6 +286,7 @@ impl TuringMachine {
             instructions,
             final_states,
             current_state,
+            previous_state: None,
             tape_position: 2,
             tape,
             frequencies: HashMap::new(),
@@ -403,6 +408,7 @@ impl TuringMachine {
 
     /// Updates the current state and returns true if the current state is a final state
     fn update_state(&mut self, state: String) -> bool {
+        self.previous_state = Some(self.current_state.clone());
         self.current_state = state.clone();
 
         if self.frequencies.contains_key(&state) {
@@ -435,10 +441,11 @@ impl TuringMachine {
 
     /// Returns true if the current state is a final state and the motion is to Halt
     pub fn finished(&self) -> bool {
-        self.final_states.contains(&self.current_state)
+        self.final_states
+            .contains(self.previous_state.as_ref().unwrap_or(&String::new()))
             && match self.get_current_instruction() {
                 Some(i) => i.movement == Movement::HALT,
-                None => false,
+                None => true,
             }
     }
 
