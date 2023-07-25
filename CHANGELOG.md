@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.1.2] - 2023-07-25
+### Fixed
+- The previous version introduced a bug in the `finished` function. This has been fixed: "finished" is when the current state is final (nothing more, nothing less)
+
 ## [2.1.1] - 2023-07-22
 ### Fixed
 - The `finished` function now assumes that it has finished if the current instruction does not exist in the instruction set. This fixes a bug where the machine would not finish if the last instruction was not defined. 
