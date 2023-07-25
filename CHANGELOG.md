@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.1.3] - 2023-07-26
+### Added
+- Expose the Movement enum
+
 ## [2.1.2] - 2023-07-25
 ### Fixed
 - The previous version introduced a bug in the `finished` function. This has been fixed: "finished" is when the current state is final (nothing more, nothing less)

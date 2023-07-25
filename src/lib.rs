@@ -5,7 +5,7 @@ mod warnings;
 
 use std::{borrow::Cow, collections::HashMap};
 
-pub use instruction::TuringInstruction;
+pub use instruction::{Movement, TuringInstruction};
 pub use output::TuringOutput;
 use pest::Parser;
 use serde::{Deserialize, Serialize};
