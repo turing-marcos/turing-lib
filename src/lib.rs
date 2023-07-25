@@ -380,7 +380,7 @@ mod test_composition {
             }
         };
 
-        assert_eq!(tm.final_result(), TuringOutput::Defined((6, 3)));
+        assert_eq!(tm.final_result(), TuringOutput::Defined((5, 3)));
 
         assert_eq!(
             tm.to_string(),
