@@ -30,7 +30,9 @@ pub enum CompilerError {
     },
 
     /// An error when parsing the file rule
-    FileRuleError { error: Box<pest::error::Error<Rule>> },
+    FileRuleError {
+        error: Box<pest::error::Error<Rule>>,
+    },
 }
 
 impl CompilerError {

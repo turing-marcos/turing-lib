@@ -1,7 +1,10 @@
 use log::{debug, error, info, warn};
 use pest::Parser;
 use pest_derive::Parser;
-use std::{collections::HashMap, fmt::{Display, self}};
+use std::{
+    collections::HashMap,
+    fmt::{self, Display},
+};
 
 use crate::{
     instruction::Movement, warnings::ErrorPosition, CompilerError, CompilerWarning, Library,
@@ -62,7 +65,11 @@ impl TuringMachine {
 
         let file = match TuringParser::parse(Rule::file, code) {
             Ok(mut f) => f.next().unwrap(),
-            Err(error) => return Err(CompilerError::FileRuleError { error: Box::new(error) }),
+            Err(error) => {
+                return Err(CompilerError::FileRuleError {
+                    error: Box::new(error),
+                })
+            }
         };
 
         for record in file.into_inner() {
@@ -188,8 +195,7 @@ impl TuringMachine {
                         Err(c_err) => return Err(c_err),
                     };
 
-                    if instructions.contains_key(&(tmp.from_state.clone(), tmp.from_value))
-                    {
+                    if instructions.contains_key(&(tmp.from_state.clone(), tmp.from_value)) {
                         warn!("Instruction {} already exists, overwriting it", tmp.clone());
 
                         warnings.push(CompilerWarning::StateOverwrite {
@@ -198,10 +204,7 @@ impl TuringMachine {
                             value_from: tmp.from_value,
                         })
                     }
-                    instructions.insert(
-                        (tmp.from_state.clone(), tmp.from_value),
-                        tmp.clone(),
-                    );
+                    instructions.insert((tmp.from_state.clone(), tmp.from_value), tmp.clone());
 
                     debug!("Found instruction {}", tmp);
                 }
@@ -369,7 +372,7 @@ impl TuringMachine {
             error!(
                 "No instruction given for state ({}, {})",
                 self.current_state.clone(),
-                if current_val {"1"} else {"0"}
+                if current_val { "1" } else { "0" }
             );
 
             return true;
