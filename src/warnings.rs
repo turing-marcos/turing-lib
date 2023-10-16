@@ -30,7 +30,7 @@ pub enum CompilerError {
     },
 
     /// An error when parsing the file rule
-    FileRuleError { error: pest::error::Error<Rule> },
+    FileRuleError { error: Box<pest::error::Error<Rule>> },
 }
 
 impl CompilerError {
@@ -93,7 +93,7 @@ impl CompilerError {
     /// Get the position of the error. It extracts the position from the `pest::error::Error` if the error is a `FileRuleError`
     pub fn position(&self) -> ErrorPosition {
         match self {
-            CompilerError::SyntaxError { position, .. } => position.clone(),
+            CompilerError::SyntaxError { position, .. } => *position,
             CompilerError::FileRuleError { error, .. } => match error.line_col {
                 pest::error::LineColLocation::Pos((line, col)) => ErrorPosition {
                     start: (line, col),
@@ -113,7 +113,7 @@ impl CompilerError {
             CompilerError::SyntaxError { expected, .. } => *expected,
             CompilerError::FileRuleError { error, .. } => match &error.variant {
                 pest::error::ErrorVariant::ParsingError { positives, .. } => {
-                    positives.first().unwrap().clone()
+                    *positives.first().unwrap()
                 }
                 _ => Rule::EOI,
             },
@@ -126,7 +126,7 @@ impl CompilerError {
             CompilerError::SyntaxError { found, .. } => *found,
             CompilerError::FileRuleError { error, .. } => match &error.variant {
                 pest::error::ErrorVariant::ParsingError { positives, .. } => {
-                    Some(positives.first().unwrap().clone())
+                    Some(*positives.first().unwrap())
                 }
                 _ => None,
             },

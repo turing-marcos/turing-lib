@@ -39,7 +39,7 @@ impl Library {
                 Err(e) => return Err(e),
             };
             instructions.insert(
-                (tmp.from_state.clone(), tmp.from_value.clone()),
+                (tmp.from_state.clone(), tmp.from_value),
                 tmp.clone(),
             );
         }
