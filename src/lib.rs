@@ -38,10 +38,7 @@ impl Library {
                 Ok(i) => i,
                 Err(e) => return Err(e),
             };
-            instructions.insert(
-                (tmp.from_state.clone(), tmp.from_value.clone()),
-                tmp.clone(),
-            );
+            instructions.insert((tmp.from_state.clone(), tmp.from_value), tmp.clone());
         }
 
         Ok(instructions)

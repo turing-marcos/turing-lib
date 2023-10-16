@@ -1,7 +1,10 @@
 use log::{debug, error, info, warn};
 use pest::Parser;
 use pest_derive::Parser;
-use std::{collections::HashMap, fmt::Write};
+use std::{
+    collections::HashMap,
+    fmt::{self, Display},
+};
 
 use crate::{
     instruction::Movement, warnings::ErrorPosition, CompilerError, CompilerWarning, Library,
@@ -62,7 +65,11 @@ impl TuringMachine {
 
         let file = match TuringParser::parse(Rule::file, code) {
             Ok(mut f) => f.next().unwrap(),
-            Err(error) => return Err(CompilerError::FileRuleError { error }),
+            Err(error) => {
+                return Err(CompilerError::FileRuleError {
+                    error: Box::new(error),
+                })
+            }
         };
 
         for record in file.into_inner() {
@@ -188,20 +195,16 @@ impl TuringMachine {
                         Err(c_err) => return Err(c_err),
                     };
 
-                    if instructions.contains_key(&(tmp.from_state.clone(), tmp.from_value.clone()))
-                    {
+                    if instructions.contains_key(&(tmp.from_state.clone(), tmp.from_value)) {
                         warn!("Instruction {} already exists, overwriting it", tmp.clone());
 
                         warnings.push(CompilerWarning::StateOverwrite {
                             position: record_span.into(),
                             state: tmp.from_state.clone(),
-                            value_from: tmp.from_value.clone(),
+                            value_from: tmp.from_value,
                         })
                     }
-                    instructions.insert(
-                        (tmp.from_state.clone(), tmp.from_value.clone()),
-                        tmp.clone(),
-                    );
+                    instructions.insert((tmp.from_state.clone(), tmp.from_value), tmp.clone());
 
                     debug!("Found instruction {}", tmp);
                 }
@@ -369,7 +372,7 @@ impl TuringMachine {
             error!(
                 "No instruction given for state ({}, {})",
                 self.current_state.clone(),
-                if current_val {"1"} else {"0"}
+                if current_val { "1" } else { "0" }
             );
 
             return true;
@@ -420,7 +423,7 @@ impl TuringMachine {
             self.frequencies.insert(state.clone(), 1);
         }
 
-        return self.final_states.contains(&self.current_state);
+        self.final_states.contains(&self.current_state)
     }
 
     /// Returns true if the current state has been reached more times than the given threshold
@@ -431,7 +434,7 @@ impl TuringMachine {
             }
         }
 
-        return false;
+        false
     }
 
     /// Resets the frequencies of the states
@@ -453,33 +456,15 @@ impl TuringMachine {
             .map(|v| if *v { "1" } else { "0" })
             .collect();
 
-        tmp.split("0")
+        tmp.split('0')
             .filter_map(|s| {
-                if s.len() > 0 {
+                if !s.is_empty() {
                     Some(s.len() as u32 - 1)
                 } else {
                     None
                 }
             })
             .collect()
-    }
-
-    /// Returns the string representation of the tape
-    pub fn to_string(&self) -> String {
-        let mut tmp1 = String::new();
-        let mut tmp2 = String::new();
-
-        for (i, v) in self.tape.iter().enumerate() {
-            write!(&mut tmp1, "{} ", if v.clone() { "1" } else { "0" }).unwrap();
-
-            if i == self.tape_position {
-                tmp2 += "^ ";
-            } else {
-                tmp2 += "  ";
-            }
-        }
-
-        format!("{}\n{}", tmp1, tmp2)
     }
 
     /// Returns the current output of the Turing machine
@@ -510,5 +495,22 @@ impl TuringMachine {
             steps,
             self.tape.iter().map(|v| if *v { 1 } else { 0 }).sum(),
         ))
+    }
+}
+
+impl Display for TuringMachine {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut tmp2 = String::new();
+        for (i, v) in self.tape.iter().enumerate() {
+            write!(f, "{} ", if *v { "1" } else { "0" }).unwrap();
+
+            if i == self.tape_position {
+                tmp2 += "^ ";
+            } else {
+                tmp2 += "  ";
+            }
+        }
+
+        write!(f, "\n{}", tmp2)
     }
 }

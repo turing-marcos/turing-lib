@@ -21,7 +21,7 @@ impl std::str::FromStr for Movement {
             "R" | "D" => Ok(Self::RIGHT),
             "L" | "I" => Ok(Self::LEFT),
             "H" | "N" => Ok(Self::HALT),
-            _ => Err(String::from(format!("\"{input}\" is an unknown movement"))),
+            _ => Err(format!("\"{input}\" is an unknown movement")),
         }
     }
 }
