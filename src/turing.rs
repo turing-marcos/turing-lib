@@ -496,6 +496,15 @@ impl TuringMachine {
             self.tape.iter().map(|v| if *v { 1 } else { 0 }).sum(),
         ))
     }
+
+    /// Returns the value of the tape at the given index, or None if the index is out of bounds
+    pub fn get(&self, i: usize) -> Option<bool> {
+        if i >= self.tape.len() {
+            return None;
+        }
+
+        Some(self.tape[i])
+    }
 }
 
 impl Display for TuringMachine {

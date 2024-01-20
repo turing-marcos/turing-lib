@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.1.6] - 2024-01-20
+### Added
+- Safe getter function for the tape
+
 ## [2.1.3] - 2023-07-26
 ### Added
 - Expose the Movement enum
