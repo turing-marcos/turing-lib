@@ -346,6 +346,7 @@ impl TuringMachine {
     }
 
     /// Gets the current instruction
+    #[inline]
     pub fn get_current_instruction(&self) -> Option<TuringInstruction> {
         let current_val: bool = self.tape[self.tape_position];
         let index = (self.current_state.clone(), current_val);
@@ -356,6 +357,7 @@ impl TuringMachine {
     /// Returns true if the current state is undefined
     /// (i.e. there is no instruction for the current state and value)
     /// except if the current state is a final state
+    #[inline]
     pub fn is_undefined(&self) -> bool {
         self.get_instruction().is_none()
     }
@@ -438,11 +440,13 @@ impl TuringMachine {
     }
 
     /// Resets the frequencies of the states
+    #[inline]
     pub fn reset_frequencies(&mut self) {
         self.frequencies = HashMap::new();
     }
 
     /// Returns true if the current state is a final state and the motion is to Halt
+    #[inline]
     pub fn finished(&self) -> bool {
         self.final_states.contains(&self.current_state)
     }
@@ -503,6 +507,7 @@ impl TuringMachine {
             return None;
         }
 
+        #[cfg(not(target_arch = "wasm32"))]
         Some(self.tape[i])
     }
 }

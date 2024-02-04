@@ -147,6 +147,7 @@ pub struct ErrorPosition {
 }
 
 impl ErrorPosition {
+    #[inline]
     pub fn new(start: (usize, usize), end: Option<(usize, usize)>) -> Self {
         ErrorPosition { start, end }
     }

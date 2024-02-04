@@ -14,12 +14,12 @@ pub use warnings::{CompilerError, CompilerWarning, ErrorPosition};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Library {
-    pub name: Cow<'static, str>,
-    pub description: Cow<'static, str>,
-    pub initial_state: Cow<'static, str>,
-    pub final_state: Cow<'static, str>,
+    pub name: &'static str,
+    pub description: &'static str,
+    pub initial_state: &'static str,
+    pub final_state: &'static str,
     pub used_states: Cow<'static, [Cow<'static, str>]>,
-    pub code: Cow<'static, str>,
+    pub code: &'static str,
 }
 
 impl Library {
@@ -64,22 +64,22 @@ impl Library {
 /// Calculates the difference between two numbers, but the result is always positive.
 pub const LIBRARIES: [Library; 5] = [
     Library {
-        name: Cow::Borrowed("sum"),
-        description: Cow::Borrowed("x + y"),
-        initial_state: Cow::Borrowed("q0"),
-        final_state: Cow::Borrowed("q2"),
+        name: "sum",
+        description: "x + y",
+        initial_state: "q0",
+        final_state: "q2",
         used_states: Cow::Borrowed(&[
             Cow::Borrowed("q0"),
             Cow::Borrowed("q1"),
             Cow::Borrowed("q2"),
         ]),
-        code: Cow::Borrowed(include_str!("./composition/sum.tm")),
+        code: include_str!("./composition/sum.tm"),
     },
     Library {
-        name: Cow::Borrowed("x2"),
-        description: Cow::Borrowed("x * 2"),
-        initial_state: Cow::Borrowed("q0"),
-        final_state: Cow::Borrowed("qf"),
+        name: "x2",
+        description: "x * 2",
+        initial_state: "q0",
+        final_state: "qf",
         used_states: Cow::Borrowed(&[
             Cow::Borrowed("q0"),
             Cow::Borrowed("q1"),
@@ -89,13 +89,13 @@ pub const LIBRARIES: [Library; 5] = [
             Cow::Borrowed("q5"),
             Cow::Borrowed("qf"),
         ]),
-        code: Cow::Borrowed(include_str!("./composition/duplicate.tm")),
+        code: include_str!("./composition/duplicate.tm"),
     },
     Library {
-        name: Cow::Borrowed("mod"),
-        description: Cow::Borrowed("x mod y"),
-        initial_state: Cow::Borrowed("q0"),
-        final_state: Cow::Borrowed("qf"),
+        name: "mod",
+        description: "x mod y",
+        initial_state: "q0",
+        final_state: "qf",
         used_states: Cow::Borrowed(&[
             Cow::Borrowed("q0"),
             Cow::Borrowed("q1"),
@@ -112,26 +112,26 @@ pub const LIBRARIES: [Library; 5] = [
             Cow::Borrowed("q11"),
             Cow::Borrowed("qf"),
         ]),
-        code: Cow::Borrowed(include_str!("./composition/mod.tm")),
+        code: include_str!("./composition/mod.tm"),
     },
     Library {
-        name: Cow::Borrowed("div2"),
-        description: Cow::Borrowed("x div 2"),
-        initial_state: Cow::Borrowed("q0"),
-        final_state: Cow::Borrowed("qf"),
+        name: "div2",
+        description: "x div 2",
+        initial_state: "q0",
+        final_state: "qf",
         used_states: Cow::Borrowed(&[
             Cow::Borrowed("q0"),
             Cow::Borrowed("q1"),
             Cow::Borrowed("q2"),
             Cow::Borrowed("qf"),
         ]),
-        code: Cow::Borrowed(include_str!("./composition/div2.tm")),
+        code: include_str!("./composition/div2.tm"),
     },
     Library {
-        name: Cow::Borrowed("bound_diff"),
-        description: Cow::Borrowed("x ∸ y"),
-        initial_state: Cow::Borrowed("q0"),
-        final_state: Cow::Borrowed("qf"),
+        name: "bound_diff",
+        description: "x ∸ y",
+        initial_state: "q0",
+        final_state: "qf",
         used_states: Cow::Borrowed(&[
             Cow::Borrowed("q0"),
             Cow::Borrowed("q1"),
@@ -142,7 +142,7 @@ pub const LIBRARIES: [Library; 5] = [
             Cow::Borrowed("q6"),
             Cow::Borrowed("qf"),
         ]),
-        code: Cow::Borrowed(include_str!("./composition/bound_diff.tm")),
+        code: include_str!("./composition/bound_diff.tm"),
     },
 ];
 
